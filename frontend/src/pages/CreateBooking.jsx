@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
 import bookingIcon from '../assets/booking.jpeg';
 import profileIcon from '../assets/profile1.jpeg';
+
+const STORAGE_KEY = 'parcel_pickup_mock_bookings';
 
 const slotData = [
   {
@@ -29,6 +31,14 @@ const slotData = [
     status: 'unavailable',
   },
 ];
+
+const defaultSelectedSlot = {
+  id: 'slot-2',
+  dateLabel: 'Tue, 17 Mar',
+  timeLabel: '9:00-9:30',
+  remainingText: '1 spots left',
+  status: 'available',
+};
 
 function StatusBar() {
   return (
@@ -76,17 +86,48 @@ function StatusBar() {
   );
 }
 
-export default function Tasks() {
+export default function CreateBooking() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [selectedDate] = useState('17 Mar');
-  const [selectedPeriod] = useState('Morning');
   const slots = useMemo(() => slotData, []);
+  const initialSlot = location.state?.selectedSlot || defaultSelectedSlot;
 
-  const handleBookNow = (slot) => {
-    navigate('/create-booking', {
-      state: { selectedSlot: slot },
-    });
+  const [selectedSlot, setSelectedSlot] = useState(initialSlot);
+
+  const handleSelectBooking = (slot) => {
+    setSelectedSlot(slot);
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const parsed = saved
+        ? JSON.parse(saved)
+        : { upcoming: [], completed: [], cancelled: [] };
+
+      const bookingNumber = `BK-${Date.now().toString().slice(-3)}`;
+
+      const newBooking = {
+        id: bookingNumber,
+        dateLabel: slot.dateLabel,
+        timeLabel: slot.timeLabel,
+        location: 'Parcel Counter A',
+        status: 'Upcoming',
+      };
+
+      const updatedBookings = {
+        upcoming: [newBooking, ...(parsed.upcoming || [])],
+        completed: parsed.completed || [],
+        cancelled: parsed.cancelled || [],
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedBookings));
+
+      navigate('/my-bookings', {
+        state: { activeTab: 'upcoming' },
+      });
+    } catch (error) {
+      console.error('Failed to save booking:', error);
+    }
   };
 
   return (
@@ -94,38 +135,31 @@ export default function Tasks() {
       <div className="relative w-[390px] min-h-[844px] bg-white px-[14px] pt-[10px] pb-[110px] flex flex-col">
         <StatusBar />
 
-        <div className="mt-[26px] flex justify-center">
+        <button
+          type="button"
+          onClick={() => navigate('/tasks')}
+          className="mt-[14px] flex w-fit items-center gap-[6px] text-[16px] font-medium text-black"
+        >
+          <span>{'<'}</span>
+          <span>Back</span>
+        </button>
+
+        <div className="mt-[16px] flex justify-center">
           <div className="rounded-[8px] bg-[#5c9df5] px-4 py-2">
             <h1 className="text-[18px] font-semibold text-white">
-              Available Pickup Slots
+              Create New Booking
             </h1>
           </div>
         </div>
 
-        <div className="mt-[24px] flex items-center justify-between gap-3">
-          <button
-            type="button"
-            className="flex h-[46px] w-[110px] items-center justify-center rounded-[8px] border border-[#d3d3d3] bg-[#f5f5f5] text-[16px] text-[#9a9a9a]"
-          >
-            {selectedDate}
-          </button>
-
-          <button
-            type="button"
-            className="flex h-[46px] w-[110px] items-center justify-center rounded-[8px] border border-[#d3d3d3] bg-[#f5f5f5] text-[16px] text-[#9a9a9a]"
-          >
-            {selectedPeriod}
-          </button>
-
-          <button
-            type="button"
-            className="flex h-[46px] w-[110px] items-center justify-center rounded-[8px] bg-[#5c9df5] text-[18px] font-semibold text-white"
-          >
-            Search
-          </button>
+        <div className="mt-[26px]">
+          <p className="text-[18px] font-bold text-[#2f2f2f]">Selected Slot:</p>
+          <p className="mt-[6px] text-[18px] font-semibold leading-[1.2] text-[#5c9df5]">
+            {selectedSlot.dateLabel} | {selectedSlot.timeLabel}
+          </p>
         </div>
 
-        <div className="mt-[26px] space-y-[18px]">
+        <div className="mt-[18px] space-y-[18px]">
           {slots.map((slot) => {
             const isAvailable = slot.status === 'available';
 
@@ -145,7 +179,7 @@ export default function Tasks() {
                     <button
                       type="button"
                       disabled={!isAvailable}
-                      onClick={() => isAvailable && handleBookNow(slot)}
+                      onClick={() => isAvailable && handleSelectBooking(slot)}
                       className={`h-[40px] min-w-[100px] rounded-[8px] px-3 text-[18px] font-semibold text-white ${
                         isAvailable ? 'bg-[#45d463]' : 'bg-[#cfcfcf]'
                       }`}
