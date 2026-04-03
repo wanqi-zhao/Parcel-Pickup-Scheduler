@@ -4,10 +4,16 @@ import Welcome from './pages/Welcome';
 import CustomerLogin from './pages/CustomerLogin';
 import Register from './pages/Register';
 import AdminLogin from './pages/AdminLogin';
-
 import AdminProfile from './pages/AdminProfile';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
+import CreateBooking from './pages/CreateBooking';
+import MyBookings from './pages/MyBookings';
+import BookingsCompleted from './pages/BookingsCompleted';
+import BookingsCancelled from './pages/BookingsCancelled';
+import UpdateBooking from './pages/UpdateBooking';
+import DeleteAccount from './pages/DeleteAccount';
+import DeleteSuccess from './pages/DeleteSuccess';
 
 export default function App() {
   return (
@@ -17,10 +23,16 @@ export default function App() {
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin-login" element={<AdminLogin />} />
-
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/create-booking" element={<CreateBooking />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
+        <Route path="/bookings-completed" element={<BookingsCompleted />} />
+        <Route path="/bookings-cancelled" element={<BookingsCancelled />} />
+        <Route path="/update-booking" element={<UpdateBooking />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
+        <Route path="/delete-success" element={<DeleteSuccess />} />
       </Routes>
     </Router>
   );
