@@ -9,7 +9,7 @@ export default function Welcome() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#efefef] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="w-[390px] min-h-[844px] bg-white px-[14px] pt-[10px] pb-[18px] flex flex-col">
         {/* iPhone 14 status bar */}
         <div className="flex items-center justify-between px-[2px]">
@@ -64,7 +64,7 @@ export default function Welcome() {
               className="w-[270px] object-contain select-none"
             />
 
-            <h1 className="mt-[6px] text-[26px] font-bold leading-none tracking-[-0.3px] text-black">
+            <h1 className="mt-[10px] text-[26px] font-bold leading-none tracking-[-0.3px] text-black">
               Welcome to APP
             </h1>
           </div>
