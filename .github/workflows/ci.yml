@@ -1,0 +1,57 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    name: Run Tests and Deploy
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [22]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Stop Running Services
+        run: pm2 stop all || true
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: |
+          npm install
+
+      - name: Install Frontend Dependencies and Build
+        working-directory: ./frontend
+        run: |
+          rm -rf build
+          npm install
+          npm run build
+
+      - name: Run Backend Tests
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
+        working-directory: ./backend
+        run: npm test
+
+      - name: Create Backend .env File
+        run: |
+          cd backend
+          printf "%s" "${{ secrets.PROD }}" > .env
+
+      - name: Restart Services
+        run: |
+          pm2 start all || true
+          pm2 restart all || true
