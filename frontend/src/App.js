@@ -14,6 +14,11 @@ import BookingsCancelled from './pages/BookingsCancelled';
 import UpdateBooking from './pages/UpdateBooking';
 import DeleteAccount from './pages/DeleteAccount';
 import DeleteSuccess from './pages/DeleteSuccess';
+import Track from './pages/Track';
+import TrackingDetail from './pages/TrackingDetail';
+
+
+
 
 export default function App() {
   return (
@@ -33,6 +38,10 @@ export default function App() {
         <Route path="/update-booking" element={<UpdateBooking />} />
         <Route path="/delete-account" element={<DeleteAccount />} />
         <Route path="/delete-success" element={<DeleteSuccess />} />
+        <Route path="/track" element={<Track />} />
+        <Route path="/tracking-detail" element={<TrackingDetail />} />
+      
+      
       </Routes>
     </Router>
   );
