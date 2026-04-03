@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Welcome from './pages/Welcome';
 import CustomerLogin from './pages/CustomerLogin';
@@ -10,16 +9,9 @@ import AdminProfile from './pages/AdminProfile';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
 
-function AppRoutes() {
-  const location = useLocation();
-
-  // Keep auth-style pages clean without the bottom navigation.
-  const hideNavbarPaths = ['/', '/customer-login', '/register', '/admin-login'];
-  const showNavbar = !hideNavbarPaths.includes(location.pathname);
-
+export default function App() {
   return (
-    <>
-      {showNavbar && <Navbar />}
+    <Router>
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/customer-login" element={<CustomerLogin />} />
@@ -30,14 +22,6 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin-profile" element={<AdminProfile />} />
       </Routes>
-    </>
-  );
-}
-
-export default function App() {
-  return (
-    <Router>
-      <AppRoutes />
     </Router>
   );
 }

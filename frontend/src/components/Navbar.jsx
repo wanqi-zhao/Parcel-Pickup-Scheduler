@@ -1,43 +1,60 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
+import trackIcon from '../assets/track.jpeg';
+import homeIcon from '../assets/home.jpeg';
+import bookingIcon from '../assets/booking.jpeg';
+import profileIcon from '../assets/profile1.jpeg';
+
+const navItems = [
+  { path: '/track', label: 'Track', icon: trackIcon },
+  { path: '/tasks', label: 'Home', icon: homeIcon },
+  { path: '/my-bookings', label: 'Bookings', icon: bookingIcon },
+  { path: '/profile', label: 'Profile', icon: profileIcon },
+];
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const isActive = (path) => {
+    if (path === '/my-bookings') {
+      return location.pathname === '/my-bookings' || location.pathname.startsWith('/update-booking');
+    }
+
+    if (path === '/track') {
+      return location.pathname === '/track' || location.pathname.startsWith('/tracking');
+    }
+
+    return location.pathname === path;
   };
 
   return (
-    <nav className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <Link to="/" className="text-2xl font-bold">Task Manager</Link>
-      <div>
-        {user ? (
-          <>
-            <Link to="/tasks" className="mr-4">Tasks</Link>
-            <Link to="/profile" className="mr-4">Profile</Link>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 px-4 py-2 rounded hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="mr-4">Login</Link>
+    <div className="fixed bottom-[12px] left-1/2 z-50 w-[360px] -translate-x-1/2 rounded-[10px] border border-[#d2d2d2] bg-[#f8f8f8] px-4 py-2 shadow-sm">
+      <div className="flex items-end justify-between">
+        {navItems.map((item) => {
+          const active = isActive(item.path);
+
+          return (
             <Link
-              to="/register"
-              className="bg-green-500 px-4 py-2 rounded hover:bg-green-700"
+              key={item.path}
+              to={item.path}
+              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
             >
-              Register
+              <img
+                src={item.icon}
+                alt={item.label}
+                className="h-[24px] w-[24px] object-contain"
+              />
+              <span
+                className={`text-[10px] leading-none ${
+                  active ? 'text-[#5c9df5]' : 'text-black'
+                }`}
+              >
+                {item.label}
+              </span>
             </Link>
-          </>
-        )}
+          );
+        })}
       </div>
-    </nav>
+    </div>
   );
 };
 
