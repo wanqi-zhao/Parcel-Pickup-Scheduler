@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
@@ -9,7 +10,6 @@ function StatusBar() {
   return (
     <div className="flex items-center justify-between px-[2px]">
       <span className="text-[16px] font-semibold tracking-[-0.2px] text-black">9:41</span>
-
       <div className="flex items-center gap-[6px]">
         <svg width="18" height="12" viewBox="0 0 18 12" fill="none">
           <rect x="1" y="7" width="2.2" height="4" rx="1" fill="#000000" />
@@ -17,14 +17,12 @@ function StatusBar() {
           <rect x="9" y="4" width="2.2" height="7" rx="1" fill="#000000" />
           <rect x="13" y="2.5" width="2.2" height="8.5" rx="1" fill="#000000" />
         </svg>
-
         <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
           <path d="M1 4.5C4.7 1.4 11.3 1.4 15 4.5" stroke="#000000" strokeWidth="1.4" strokeLinecap="round" />
           <path d="M3.5 7C6 4.9 10 4.9 12.5 7" stroke="#000000" strokeWidth="1.4" strokeLinecap="round" />
           <path d="M6.3 9.3C7.2 8.6 8.8 8.6 9.7 9.3" stroke="#000000" strokeWidth="1.4" strokeLinecap="round" />
           <circle cx="8" cy="10.4" r="1" fill="#000000" />
         </svg>
-
         <div className="relative h-[12px] w-[25px] rounded-[3px] border-[1.6px] border-black">
           <div className="absolute left-[1.5px] top-[1.5px] h-[7px] w-[18px] rounded-[2px] bg-black" />
           <div className="absolute -right-[3px] top-[3px] h-[4px] w-[2px] rounded-r-[1px] bg-black" />
@@ -45,8 +43,10 @@ function DetailCard({ label, value }) {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
+    logout();
     navigate('/customer-login');
   };
 
@@ -100,7 +100,11 @@ export default function Profile() {
 
         <div className="absolute bottom-[12px] left-[14px] right-[14px] rounded-[10px] border border-[#cfcfcf] bg-white px-4 py-2">
           <div className="flex items-end justify-between">
-            <button type="button" className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
+            <button
+              type="button"
+              onClick={() => navigate('/track')}
+              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
+            >
               <img src={trackIcon} alt="Track" className="h-[28px] w-[28px] object-contain" />
               <span className="text-[10px] leading-none text-black">Track</span>
             </button>

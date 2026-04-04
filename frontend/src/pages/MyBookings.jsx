@@ -1,66 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../axiosConfig';
 
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
 import bookingIcon from '../assets/booking.jpeg';
 import profileIcon from '../assets/profile1.jpeg';
-
-const STORAGE_KEY = 'parcel_pickup_mock_bookings';
-
-const defaultBookings = {
-  upcoming: [
-    {
-      id: 'BK-001',
-      dateLabel: 'Tue, 17 Mar',
-      timeLabel: '9:00-9:30',
-      status: 'Confirmed',
-    },
-  ],
-  completed: [
-    {
-      id: 'BK-011',
-      dateLabel: 'Mon, 16 Mar',
-      timeLabel: '10:00-10:30',
-      status: 'Completed',
-    },
-    {
-      id: 'BK-010',
-      dateLabel: 'Mon, 16 Mar',
-      timeLabel: '10:00-10:30',
-      status: 'Completed',
-    },
-  ],
-  cancelled: [
-    {
-      id: 'BK-003',
-      dateLabel: 'Mon, 16 Mar',
-      timeLabel: '9:00-9:30',
-      status: 'Cancelled',
-    },
-  ],
-};
-
-function readStoredBookings() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (!saved) {
-      return defaultBookings;
-    }
-
-    const parsed = JSON.parse(saved);
-
-    return {
-      upcoming: parsed.upcoming && parsed.upcoming.length > 0 ? parsed.upcoming : defaultBookings.upcoming,
-      completed: parsed.completed || defaultBookings.completed,
-      cancelled: parsed.cancelled || defaultBookings.cancelled,
-    };
-  } catch (error) {
-    console.error('Failed to read bookings from localStorage:', error);
-    return defaultBookings;
-  }
-}
 
 function StatusBar() {
   return (
@@ -108,12 +54,45 @@ function TabButton({ label, isActive, onClick }) {
 export default function MyBookings() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
-  const [bookings, setBookings] = useState(() => readStoredBookings());
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCancellingId, setIsCancellingId] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Load upcoming bookings from MongoDB when the page opens.
+  const fetchUpcomingBookings = async () => {
+    if (!user?.token) {
+      setErrorMessage('Please log in again to view your bookings.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      const response = await axiosInstance.get('/api/bookings?status=Upcoming', {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+
+      setBookings(response.data || []);
+    } catch (error) {
+      const serverMessage =
+        error?.response?.data?.message || 'Failed to load bookings.';
+      setErrorMessage(serverMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
-  }, [bookings]);
+    fetchUpcomingBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (location.state?.activeTab === 'completed') {
@@ -125,35 +104,56 @@ export default function MyBookings() {
     }
   }, [location.state, navigate]);
 
-  const upcomingBookings = useMemo(() => bookings.upcoming || [], [bookings]);
+  // Normalize the API response to the shape expected by the existing UI.
+  const upcomingBookings = useMemo(
+    () =>
+      bookings.map((booking) => ({
+        ...booking,
+        id: booking.bookingId,
+      })),
+    [bookings]
+  );
 
   const handleEditBooking = (booking) => {
     navigate('/update-booking', {
-      state: { booking },
+      state: {
+        booking: {
+          ...booking,
+          id: booking.bookingId,
+          _id: booking._id,
+        },
+      },
     });
   };
 
-  const handleCancelBooking = (bookingId) => {
-    setBookings((prev) => {
-      const targetBooking = prev.upcoming.find((item) => item.id === bookingId);
+  const handleCancelBooking = async (bookingMongoId) => {
+    if (!user?.token) {
+      setErrorMessage('Please log in again to cancel your booking.');
+      return;
+    }
 
-      if (!targetBooking) {
-        return prev;
-      }
+    try {
+      setIsCancellingId(bookingMongoId);
+      setErrorMessage('');
 
-      const updatedUpcoming = prev.upcoming.filter((item) => item.id !== bookingId);
+      await axiosInstance.patch(
+        `/api/bookings/${bookingMongoId}/cancel`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
 
-      const cancelledBooking = {
-        ...targetBooking,
-        status: 'Cancelled',
-      };
-
-      return {
-        ...prev,
-        upcoming: updatedUpcoming,
-        cancelled: [cancelledBooking, ...(prev.cancelled || [])],
-      };
-    });
+      setBookings((prev) => prev.filter((item) => item._id !== bookingMongoId));
+    } catch (error) {
+      const serverMessage =
+        error?.response?.data?.message || 'Failed to cancel booking.';
+      setErrorMessage(serverMessage);
+    } finally {
+      setIsCancellingId('');
+    }
   };
 
   return (
@@ -163,7 +163,8 @@ export default function MyBookings() {
 
         <button
           type="button"
-          onClick={() => navigate('/create-booking')}
+         onClick={() => navigate('/tasks')}
+      
           className="mt-[12px] flex w-fit items-center gap-[4px] text-[16px] font-medium text-black"
         >
           <span>{'<'}</span>
@@ -182,14 +183,24 @@ export default function MyBookings() {
           <TabButton label="Cancelled" isActive={false} onClick={() => navigate('/bookings-cancelled')} />
         </div>
 
+        {errorMessage && (
+          <div className="mt-[16px] rounded-[8px] bg-red-100 px-4 py-3 text-[13px] text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="mt-[28px] flex-1 space-y-[20px]">
-          {upcomingBookings.length === 0 ? (
+          {isLoading ? (
+            <div className="rounded-[10px] border border-[#d4d4d4] bg-white px-4 py-8 text-center">
+              <p className="text-[15px] text-[#8a8a8a]">Loading bookings...</p>
+            </div>
+          ) : upcomingBookings.length === 0 ? (
             <div className="rounded-[10px] border border-[#d4d4d4] bg-white px-4 py-8 text-center">
               <p className="text-[15px] text-[#8a8a8a]">No upcoming bookings found.</p>
             </div>
           ) : (
             upcomingBookings.map((booking) => (
-              <div key={booking.id} className="rounded-[10px] border border-[#d4d4d4] bg-white px-[18px] py-[16px]">
+              <div key={booking._id} className="rounded-[10px] border border-[#d4d4d4] bg-white px-[18px] py-[16px]">
                 <p className="text-[18px] font-bold text-[#333333]">{booking.id}</p>
 
                 <p className="mt-[8px] text-[18px] font-semibold leading-none text-[#5c9df5]">
@@ -211,10 +222,11 @@ export default function MyBookings() {
 
                   <button
                     type="button"
-                    onClick={() => handleCancelBooking(booking.id)}
-                    className="h-[36px] rounded-[6px] bg-[#ff4a43] px-[14px] text-[18px] font-semibold text-white"
+                    disabled={isCancellingId === booking._id}
+                    onClick={() => handleCancelBooking(booking._id)}
+                    className="h-[36px] rounded-[6px] bg-[#ff4a43] px-[14px] text-[18px] font-semibold text-white disabled:opacity-70"
                   >
-                    Cancel
+                    {isCancellingId === booking._id ? 'Cancelling...' : 'Cancel'}
                   </button>
                 </div>
               </div>
@@ -224,7 +236,11 @@ export default function MyBookings() {
 
         <div className="absolute bottom-[12px] left-[14px] right-[14px] rounded-[10px] border border-[#cfcfcf] bg-white px-4 py-2">
           <div className="flex items-end justify-between">
-            <button type="button" className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
+            <button
+              type="button"
+              onClick={() => navigate('/track')}
+              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
+            >
               <img src={trackIcon} alt="Track" className="h-[28px] w-[28px] object-contain" />
               <span className="text-[10px] leading-none text-black">Track</span>
             </button>
