@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../axiosConfig';
 
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
 import bookingIcon from '../assets/booking.jpeg';
 import profileIcon from '../assets/profile1.jpeg';
-
-const STORAGE_KEY = 'parcel_pickup_mock_bookings';
 
 const slotData = [
   {
@@ -89,44 +89,50 @@ function StatusBar() {
 export default function CreateBooking() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const slots = useMemo(() => slotData, []);
   const initialSlot = location.state?.selectedSlot || defaultSelectedSlot;
 
   const [selectedSlot, setSelectedSlot] = useState(initialSlot);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSelectBooking = (slot) => {
-    setSelectedSlot(slot);
+  // Create one booking in MongoDB instead of writing to localStorage.
+  const handleSelectBooking = async (slot) => {
+    if (!user?.token) {
+      setErrorMessage('Please log in again before creating a booking.');
+      return;
+    }
 
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      const parsed = saved
-        ? JSON.parse(saved)
-        : { upcoming: [], completed: [], cancelled: [] };
+      setSelectedSlot(slot);
+      setIsSubmitting(true);
+      setErrorMessage('');
 
-      const bookingNumber = `BK-${Date.now().toString().slice(-3)}`;
+      await axiosInstance.post(
+        '/api/bookings',
+        {
+          dateLabel: slot.dateLabel,
+          timeLabel: slot.timeLabel,
+          location: 'Parcel Counter A',
+          contactNumber: user.phone || '',
+          pickupNote: '',
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
 
-      const newBooking = {
-        id: bookingNumber,
-        dateLabel: slot.dateLabel,
-        timeLabel: slot.timeLabel,
-        location: 'Parcel Counter A',
-        status: 'Upcoming',
-      };
-
-      const updatedBookings = {
-        upcoming: [newBooking, ...(parsed.upcoming || [])],
-        completed: parsed.completed || [],
-        cancelled: parsed.cancelled || [],
-      };
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedBookings));
-
-      navigate('/my-bookings', {
-        state: { activeTab: 'upcoming' },
-      });
+      navigate('/my-bookings');
     } catch (error) {
-      console.error('Failed to save booking:', error);
+      const serverMessage =
+        error?.response?.data?.message || 'Failed to create booking. Please try again.';
+      setErrorMessage(serverMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -159,6 +165,12 @@ export default function CreateBooking() {
           </p>
         </div>
 
+        {errorMessage && (
+          <div className="mt-[16px] rounded-[8px] bg-red-100 px-4 py-3 text-[13px] text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="mt-[18px] space-y-[18px]">
           {slots.map((slot) => {
             const isAvailable = slot.status === 'available';
@@ -178,13 +190,17 @@ export default function CreateBooking() {
 
                     <button
                       type="button"
-                      disabled={!isAvailable}
+                      disabled={!isAvailable || isSubmitting}
                       onClick={() => isAvailable && handleSelectBooking(slot)}
                       className={`h-[40px] min-w-[100px] rounded-[8px] px-3 text-[18px] font-semibold text-white ${
                         isAvailable ? 'bg-[#45d463]' : 'bg-[#cfcfcf]'
-                      }`}
+                      } ${isSubmitting ? 'opacity-70' : ''}`}
                     >
-                      {isAvailable ? 'Book Now' : 'Unavailable'}
+                      {isSubmitting && selectedSlot.id === slot.id
+                        ? 'Saving...'
+                        : isAvailable
+                        ? 'Book Now'
+                        : 'Unavailable'}
                     </button>
                   </div>
                 </div>
@@ -205,6 +221,7 @@ export default function CreateBooking() {
           <div className="flex items-end justify-between">
             <button
               type="button"
+              onClick={() => navigate('/track')}
               className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
             >
               <img

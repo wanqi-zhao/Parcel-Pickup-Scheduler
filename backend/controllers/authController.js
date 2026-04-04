@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Booking = require('../models/Booking');
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^\+?\d{8,15}$/;
@@ -54,6 +55,7 @@ const registerUser = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 /**
  * Register a new customer for the actual Parcel Pickup Scheduler app.
  */
@@ -135,7 +137,7 @@ const loginCustomer = async (req, res) => {
     }
 
     const cleanIdentifier = String(identifier).trim();
-    let query = { role: 'customer' };
+    const query = { role: 'customer' };
 
     if (isValidEmail(cleanIdentifier)) {
       query.email = cleanIdentifier.toLowerCase();
@@ -216,9 +218,81 @@ const loginAdmin = async (req, res) => {
   }
 };
 
+/**
+ * Get the currently logged-in user's profile.
+ */
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Update the currently logged-in user's profile.
+ */
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.firstName = req.body.firstName || user.firstName;
+    user.lastName = req.body.lastName || user.lastName;
+    user.email = req.body.email || user.email;
+    user.phone = req.body.phone || user.phone;
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    const updated = await user.save();
+
+    return res.json({
+      _id: updated._id,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      email: updated.email,
+      phone: updated.phone,
+      role: updated.role,
+      token: generateToken(updated._id, updated.role),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Delete the current user account and all related bookings.
+ */
+const deleteUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await Booking.deleteMany({ userId });
+    await User.findByIdAndDelete(userId);
+
+    return res.status(200).json({
+      message: 'Your account has been deleted successfully.',
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   registerCustomer,
   loginCustomer,
   loginAdmin,
+  getProfile,
+  updateUserProfile,
+  deleteUserProfile,
 };

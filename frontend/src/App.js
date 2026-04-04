@@ -24,7 +24,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Welcome />} />
+         <Route path="/" element={<Welcome />} />
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin-login" element={<AdminLogin />} />
