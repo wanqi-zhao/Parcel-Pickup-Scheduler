@@ -171,6 +171,7 @@ export default function Tasks() {
           <div className="flex items-end justify-between">
             <button
               type="button"
+              onClick={() => navigate('/track')} 
               className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
             >
               <img

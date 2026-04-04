@@ -97,7 +97,7 @@ export default function Profile() {
             Delete Account
           </button>
         </div>
-
+        onClick={() => navigate('/track')} 
         <div className="absolute bottom-[12px] left-[14px] right-[14px] rounded-[10px] border border-[#cfcfcf] bg-white px-4 py-2">
           <div className="flex items-end justify-between">
             <button type="button" className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
