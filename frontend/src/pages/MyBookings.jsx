@@ -163,7 +163,8 @@ export default function MyBookings() {
 
         <button
           type="button"
-          onClick={() => navigate('/create-booking')}
+         onClick={() => navigate('/tasks')}
+      
           className="mt-[12px] flex w-fit items-center gap-[4px] text-[16px] font-medium text-black"
         >
           <span>{'<'}</span>

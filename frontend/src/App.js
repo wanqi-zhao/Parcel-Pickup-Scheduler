@@ -17,22 +17,24 @@ import DeleteSuccess from './pages/DeleteSuccess';
 import Track from './pages/Track';
 import TrackingDetail from './pages/TrackingDetail';
 
-
-
+import AdminDashboard from './pages/AdminDashboard';
+import ManageBookings from './pages/ManageBookings';
+import ManageSlots from './pages/ManageSlots';
+import AddNewSlot from './pages/AddNewSlot';
+import AdminUpdateBooking from './pages/AdminUpdateBooking';
 
 export default function App() {
   return (
     <Router>
       <Routes>
-         <Route path="/" element={<Welcome />} />
+        {/* customer side */}
+        <Route path="/" element={<Welcome />} />
         <Route path="/customer-login" element={<CustomerLogin />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/create-booking" element={<CreateBooking />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/admin-profile" element={<AdminProfile />} />
         <Route path="/bookings-completed" element={<BookingsCompleted />} />
         <Route path="/bookings-cancelled" element={<BookingsCancelled />} />
         <Route path="/update-booking" element={<UpdateBooking />} />
@@ -40,8 +42,15 @@ export default function App() {
         <Route path="/delete-success" element={<DeleteSuccess />} />
         <Route path="/track" element={<Track />} />
         <Route path="/tracking-detail" element={<TrackingDetail />} />
-      
-      
+
+        {/* admin side */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/manage-bookings" element={<ManageBookings />} />
+        <Route path="/manage-slots" element={<ManageSlots />} />
+        <Route path="/add-new-slot" element={<AddNewSlot />} />
+        <Route path="/admin-update-booking" element={<AdminUpdateBooking />} />
+        <Route path="/admin-profile" element={<AdminProfile />} />
       </Routes>
     </Router>
   );
