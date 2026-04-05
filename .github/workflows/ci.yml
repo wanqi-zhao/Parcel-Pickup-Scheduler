@@ -43,7 +43,8 @@ jobs:
       - name: Install Frontend Dependencies and Build
         working-directory: ./frontend
         run: |
-          npm install
+          rm -rf node_modules
+          npm ci
           npm run build
 
       - name: Stop Running Services
