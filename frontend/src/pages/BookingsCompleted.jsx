@@ -1,37 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../axiosConfig';
 
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
 import bookingIcon from '../assets/booking.jpeg';
 import profileIcon from '../assets/profile1.jpeg';
-
-const STORAGE_KEY = 'parcel_pickup_mock_bookings';
-
-const defaultBookings = {
-  upcoming: [],
-  completed: [
-    { id: 'BK-011', dateLabel: 'Mon, 16 Mar', timeLabel: '10:00-10:30', status: 'Completed' },
-    { id: 'BK-010', dateLabel: 'Mon, 16 Mar', timeLabel: '10:00-10:30', status: 'Completed' },
-  ],
-  cancelled: [],
-};
-
-function readStoredBookings() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return defaultBookings;
-    const parsed = JSON.parse(saved);
-    return {
-      upcoming: parsed.upcoming || [],
-      completed: parsed.completed && parsed.completed.length > 0 ? parsed.completed : defaultBookings.completed,
-      cancelled: parsed.cancelled || [],
-    };
-  } catch (error) {
-    console.error('Failed to read bookings from localStorage:', error);
-    return defaultBookings;
-  }
-}
 
 function StatusBar() {
   return (
@@ -75,15 +50,35 @@ function TabButton({ label, isActive, onClick }) {
 
 export default function BookingsCompleted() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const completedBookings = useMemo(() => {
-    const storedBookings = readStoredBookings();
-    return storedBookings.completed || [];
-  }, []);
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleViewDetails = (booking) => {
-    console.log('Completed booking details:', booking);
-  };
+  // Fetch completed bookings from backend.
+  useEffect(() => {
+    const fetchCompleted = async () => {
+      if (!user?.token) {
+        setErrorMessage('Please log in again to view your bookings.');
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        setErrorMessage('');
+        const response = await axiosInstance.get('/api/bookings?status=Completed', {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setBookings(response.data || []);
+      } catch (error) {
+        setErrorMessage(error?.response?.data?.message || 'Failed to load bookings.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCompleted();
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
@@ -111,30 +106,31 @@ export default function BookingsCompleted() {
           <TabButton label="Cancelled" isActive={false} onClick={() => navigate('/bookings-cancelled')} />
         </div>
 
+        {errorMessage && (
+          <div className="mt-[16px] rounded-[8px] bg-red-100 px-4 py-3 text-[13px] text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="mt-[28px] flex-1 space-y-[20px]">
-          {completedBookings.length === 0 ? (
+          {isLoading ? (
+            <div className="rounded-[10px] border border-[#d4d4d4] bg-white px-4 py-8 text-center">
+              <p className="text-[15px] text-[#8a8a8a]">Loading bookings...</p>
+            </div>
+          ) : bookings.length === 0 ? (
             <div className="rounded-[10px] border border-[#d4d4d4] bg-white px-4 py-8 text-center">
               <p className="text-[15px] text-[#8a8a8a]">No completed bookings found.</p>
             </div>
           ) : (
-            completedBookings.map((booking) => (
-              <div key={booking.id} className="rounded-[10px] border border-[#d4d4d4] bg-white px-[18px] py-[16px]">
-                <p className="text-[18px] font-bold text-[#333333]">{booking.id}</p>
+            bookings.map((booking) => (
+              <div key={booking._id} className="rounded-[10px] border border-[#d4d4d4] bg-white px-[18px] py-[16px]">
+                <p className="text-[18px] font-bold text-[#333333]">{booking.bookingId}</p>
                 <p className="mt-[8px] text-[18px] font-semibold leading-none text-[#5c9df5]">
                   {booking.dateLabel}|{booking.timeLabel}
                 </p>
                 <p className="mt-[10px] text-[18px] font-medium leading-none text-[#43c25c]">
                   Status: {booking.status}
                 </p>
-                <div className="mt-[18px] flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleViewDetails(booking)}
-                    className="h-[36px] rounded-[6px] bg-[#5c9df5] px-[18px] text-[18px] font-semibold text-white"
-                  >
-                    Details
-                  </button>
-                </div>
               </div>
             ))
           )}
@@ -142,35 +138,19 @@ export default function BookingsCompleted() {
 
         <div className="absolute bottom-[12px] left-[14px] right-[14px] rounded-[10px] border border-[#cfcfcf] bg-white px-4 py-2">
           <div className="flex items-end justify-between">
-            <button
-              type="button"
-              onClick={() => navigate('/track')}
-              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
-            >
+            <button type="button" onClick={() => navigate('/track')} className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
               <img src={trackIcon} alt="Track" className="h-[28px] w-[28px] object-contain" />
               <span className="text-[10px] leading-none text-black">Track</span>
             </button>
-            <button
-              type="button"
-              onClick={() => navigate('/tasks')}
-              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
-            >
+            <button type="button" onClick={() => navigate('/tasks')} className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
               <img src={homeIcon} alt="Home" className="h-[28px] w-[28px] object-contain opacity-70" />
               <span className="text-[10px] leading-none text-black">Home</span>
             </button>
-            <button
-              type="button"
-              onClick={() => navigate('/my-bookings')}
-              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
-            >
+            <button type="button" onClick={() => navigate('/my-bookings')} className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
               <img src={bookingIcon} alt="Bookings" className="h-[28px] w-[28px] object-contain" />
               <span className="text-[10px] leading-none text-[#5c9df5]">Bookings</span>
             </button>
-            <button
-              type="button"
-              onClick={() => navigate('/profile')}
-              className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]"
-            >
+            <button type="button" onClick={() => navigate('/profile')} className="flex min-w-[64px] flex-col items-center justify-center gap-[2px]">
               <img src={profileIcon} alt="Profile" className="h-[28px] w-[28px] object-contain" />
               <span className="text-[10px] leading-none text-black">Profile</span>
             </button>

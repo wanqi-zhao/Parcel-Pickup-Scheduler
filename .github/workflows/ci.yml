@@ -1,4 +1,4 @@
-name: Backend CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   test-and-deploy:
-    name: Run Tests and Deploy
+    name: Test and Deploy
     runs-on: self-hosted
 
     strategy:
@@ -23,20 +23,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Stop Running Services
-        run: pm2 stop all || true
-
       - name: Install Backend Dependencies
         working-directory: ./backend
-        run: |
-          npm install
+        run: npm install
 
-      - name: Install Frontend Dependencies and Build
-        working-directory: ./frontend
+      - name: Create Backend .env File
         run: |
-          rm -rf build
-          npm install
-          npm run build
+          cd backend
+          printf "%s" "${{ secrets.PROD }}" > .env
 
       - name: Run Backend Tests
         env:
@@ -46,12 +40,16 @@ jobs:
         working-directory: ./backend
         run: npm test
 
-      - name: Create Backend .env File
+      - name: Install Frontend Dependencies and Build
+        working-directory: ./frontend
         run: |
-          cd backend
-          printf "%s" "${{ secrets.PROD }}" > .env
+          npm install
+          npm run build
+
+      - name: Stop Running Services
+        run: pm2 stop all || true
 
       - name: Restart Services
         run: |
-          pm2 start all || true
-          pm2 restart all || true
+          pm2 start ecosystem.config.js || pm2 restart ecosystem.config.js --update-env || true
+          pm2 save

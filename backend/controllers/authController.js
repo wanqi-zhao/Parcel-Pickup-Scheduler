@@ -55,7 +55,6 @@ const registerUser = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
 /**
  * Register a new customer for the actual Parcel Pickup Scheduler app.
  */
@@ -137,7 +136,7 @@ const loginCustomer = async (req, res) => {
     }
 
     const cleanIdentifier = String(identifier).trim();
-    const query = { role: 'customer' };
+    let query = { role: 'customer' };
 
     if (isValidEmail(cleanIdentifier)) {
       query.email = cleanIdentifier.toLowerCase();
@@ -218,9 +217,6 @@ const loginAdmin = async (req, res) => {
   }
 };
 
-/**
- * Get the currently logged-in user's profile.
- */
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
@@ -231,9 +227,6 @@ const getProfile = async (req, res) => {
   }
 };
 
-/**
- * Update the currently logged-in user's profile.
- */
 const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -264,24 +257,16 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-/**
- * Delete the current user account and all related bookings.
- */
 const deleteUserProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     await Booking.deleteMany({ userId });
     await User.findByIdAndDelete(userId);
 
-    return res.status(200).json({
-      message: 'Your account has been deleted successfully.',
-    });
+    return res.status(200).json({ message: 'Your account has been deleted successfully.' });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

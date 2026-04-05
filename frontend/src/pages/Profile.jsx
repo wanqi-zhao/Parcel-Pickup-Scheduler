@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../axiosConfig';
 
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
@@ -36,14 +38,33 @@ function DetailCard({ label, value }) {
   return (
     <div className="rounded-[8px] border border-[#d0d0d0] bg-white px-[10px] py-[8px]">
       <p className="text-[15px] font-semibold text-[#222222]">{label}</p>
-      <p className="mt-[4px] text-[16px] text-[#9a9a9a]">{value}</p>
+      <p className="mt-[4px] text-[16px] text-[#9a9a9a]">{value || '—'}</p>
     </div>
   );
 }
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  const [profile, setProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (!user?.token) {
+      setIsLoading(false);
+      return;
+    }
+
+    axiosInstance
+      .get('/api/auth/profile', {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      .then((res) => setProfile(res.data))
+      .catch(() => setErrorMessage('Failed to load profile.'))
+      .finally(() => setIsLoading(false));
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -73,12 +94,26 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="mt-[14px] space-y-[8px]">
-          <DetailCard label="Name" value="Wanqi Zhao" />
-          <DetailCard label="Email" value="n12544591@qut.edu.au" />
-          <DetailCard label="Date Of Birth" value="11/23/2001" />
-          <DetailCard label="Gender" value="Female" />
-        </div>
+        {errorMessage && (
+          <div className="mt-[12px] rounded-[8px] bg-red-100 px-4 py-3 text-[13px] text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="mt-[18px] space-y-[8px]">
+            <p className="text-center text-[15px] text-[#8a8a8a]">Loading...</p>
+          </div>
+        ) : (
+          <div className="mt-[14px] space-y-[8px]">
+            <DetailCard
+              label="Name"
+              value={profile ? `${profile.firstName} ${profile.lastName}` : ''}
+            />
+            <DetailCard label="Email" value={profile?.email} />
+            <DetailCard label="Phone" value={profile?.phone} />
+          </div>
+        )}
 
         <div className="mt-auto space-y-[14px]">
           <button
