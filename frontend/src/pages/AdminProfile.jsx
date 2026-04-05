@@ -87,12 +87,12 @@ export default function AdminProfile() {
         <div className="mt-[20px] space-y-[10px]">
           <InfoRow
             label="Name"
-            value={user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Wanqi Zhao'}
+            value={user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : ''}
           />
-          <InfoRow label="Email" value={user?.email || 'n12544591@parcelpickupscheduler.com'} />
-          <InfoRow label="Date Of Birth" value={user?.dob || '11/23/2001'} />
-          <InfoRow label="Gender" value={user?.gender || 'Female'} />
-          <InfoRow label="Staff ID" value={user?.adminId || '12544591'} />
+          <InfoRow label="Email" value={user?.email || ''} />
+          <InfoRow label="Date Of Birth" value={user?.dob || ''} />
+          <InfoRow label="Gender" value={user?.gender || ''} />
+          <InfoRow label="Staff ID" value={user?.adminId || ''} />
         </div>
 
         <div className="mt-auto pb-[30px] pt-[30px] space-y-[12px]">

@@ -41,7 +41,7 @@ export default function AdminUpdateBooking() {
   const [selectedPeriod, setSelectedPeriod] = useState('Afternoon');
   const [newTime, setNewTime] = useState(booking?.timeLabel || '');
   const [contactNumber, setContactNumber] = useState(booking?.contactNumber || '');
-  const [pickupNote, setPickupNote] = useState(booking?.notes || '');
+  const [pickupNote, setPickupNote] = useState(booking?.pickupNote || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');

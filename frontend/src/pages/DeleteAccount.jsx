@@ -1,3 +1,8 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../axiosConfig';
+
 import trackIcon from '../assets/track.jpeg';
 import homeIcon from '../assets/home.jpeg';
 import bookingIcon from '../assets/booking.jpeg';
@@ -42,6 +47,26 @@ function DetailCard({ label, value }) {
 }
 
 export default function DeleteAccount() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleDelete = async () => {
+    if (!user?.token) return;
+    try {
+      setIsDeleting(true);
+      await axiosInstance.delete('/api/auth/profile', {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      logout();
+      navigate('/delete-success');
+    } catch {
+      setErrorMessage('Failed to delete account. Please try again.');
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <div className="relative w-[390px] min-h-[844px] overflow-hidden rounded-[18px] bg-white px-[10px] pt-[10px] pb-[110px] flex flex-col">
@@ -62,10 +87,9 @@ export default function DeleteAccount() {
           </div>
 
           <div className="mt-[14px] space-y-[8px]">
-            <DetailCard label="Name" value="Wanqi Zhao" />
-            <DetailCard label="Email" value="n12544591@qut.edu.au" />
-            <DetailCard label="Date Of Birth" value="11/23/2001" />
-            <DetailCard label="Gender" value="Female" />
+            <DetailCard label="Name" value={user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : ''} />
+            <DetailCard label="Email" value={user?.email || ''} />
+            <DetailCard label="Phone" value={user?.phone || ''} />
           </div>
 
           <div className="mt-auto space-y-[14px]">
@@ -120,21 +144,27 @@ export default function DeleteAccount() {
             Are you sure you want to delete your account?
           </p>
 
+          {errorMessage && (
+            <p className="mt-[8px] text-center text-[12px] text-red-600">{errorMessage}</p>
+          )}
+
           <div className="mt-[16px] flex flex-col items-center gap-[8px]">
-            <a
-              href="/profile"
+            <button
+              type="button"
+              onClick={() => navigate('/profile')}
               className="flex h-[28px] min-w-[74px] items-center justify-center rounded-[16px] border border-[#d0d0d0] bg-white px-[18px] text-[14px] font-semibold text-[#5c9df5]"
             >
               Cancel
-            </a>
+            </button>
 
-            <a
-              href="/delete-success"
-              onClick={() => localStorage.removeItem('parcel_pickup_mock_bookings')}
-              className="flex h-[28px] min-w-[74px] items-center justify-center rounded-[16px] border border-[#d0d0d0] bg-white px-[18px] text-[14px] font-semibold text-[#ff3b30]"
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleDelete}
+              className="flex h-[28px] min-w-[74px] items-center justify-center rounded-[16px] border border-[#d0d0d0] bg-white px-[18px] text-[14px] font-semibold text-[#ff3b30] disabled:opacity-60"
             >
-              Delete
-            </a>
+              {isDeleting ? '...' : 'Delete'}
+            </button>
           </div>
         </div>
       </div>

@@ -1,23 +1,24 @@
 import axios from 'axios';
 
-// Change the baseURL to your backend server address.
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
+const axiosInstance = axios.create({
+  baseURL: '',
+  headers: { 'Content-Type': 'application/json' },
 });
 
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
-    const adminToken = localStorage.getItem('adminToken');
-    const userToken = localStorage.getItem('token');
-
-    const token = adminToken || userToken;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const stored = localStorage.getItem('user');
+      const user = stored ? JSON.parse(stored) : null;
+      if (user?.token) {
+        config.headers.Authorization = `Bearer ${user.token}`;
+      }
+    } catch {
+      // ignore
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-export default api;
+export default axiosInstance;
