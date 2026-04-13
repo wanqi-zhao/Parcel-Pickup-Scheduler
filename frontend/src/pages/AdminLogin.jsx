@@ -187,28 +187,6 @@ export default function AdminLogin() {
 
             <div className="flex h-[46px] items-center rounded-[8px] border border-[#cfcfcf] bg-white px-[14px]">
               <input
-                type="text"
-                name="firstName"
-                placeholder="First name"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="w-full bg-transparent text-[16px] text-black outline-none placeholder:text-[#b8b8b8]"
-              />
-            </div>
-
-            <div className="flex h-[46px] items-center rounded-[8px] border border-[#cfcfcf] bg-white px-[14px]">
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Last name"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full bg-transparent text-[16px] text-black outline-none placeholder:text-[#b8b8b8]"
-              />
-            </div>
-
-            <div className="flex h-[46px] items-center rounded-[8px] border border-[#cfcfcf] bg-white px-[14px]">
-              <input
                 type="password"
                 name="password"
                 placeholder="Password"
@@ -231,7 +209,7 @@ export default function AdminLogin() {
             disabled={isSubmitting}
             className="mt-[30px] h-[44px] w-full rounded-[8px] bg-[#e9e9e9] text-[17px] font-semibold text-black disabled:opacity-70"
           >
-            {isSubmitting ? 'Signing In...' : 'Sign Up'}
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
