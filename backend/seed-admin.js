@@ -13,7 +13,7 @@ async function run() {
       lastName: 'Zhao',
       adminId: 'N12544591',
       email: 'n12544591@qut.edu.au',
-      password: 'admin1234',
+      password: 'Admin1234',
       role: 'admin',
     });
 
